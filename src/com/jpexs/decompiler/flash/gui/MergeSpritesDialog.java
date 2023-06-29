@@ -122,7 +122,7 @@ public class MergeSpritesDialog extends AppDialog {
 
                     @Override
                     public Object getTransferData(DataFlavor df) throws UnsupportedFlavorException, IOException {
-                        return data;
+                        return null;
                     }
                 };
             }
@@ -140,21 +140,16 @@ public class MergeSpritesDialog extends AppDialog {
 
             @Override
             public boolean canImport(TransferHandler.TransferSupport support) {
-                return support.isDrop() && support.isDataFlavorSupported(localFlavor);
+                return support.isDataFlavorSupported(localFlavor);
             }
 
             @Override
             public boolean importData(TransferHandler.TransferSupport support) {
-                try {
-                    DefineSpriteTag s = (DefineSpriteTag) support.getTransferable().getTransferData(localFlavor);
-                    JList.DropLocation dl = (JList.DropLocation) support.getDropLocation();
-                    sprites.add(dl.getIndex(), s);
-                    beforeIndex = dl.getIndex() < index;
-                    return true;
-                } catch (UnsupportedFlavorException | IOException ex) {
-                }
-
-                return false;
+                JList.DropLocation dl = (JList.DropLocation) support.getDropLocation();
+                int newIndex = dl.getIndex();
+                sprites.add(newIndex, sprites.get(index));
+                beforeIndex = newIndex < index;
+                return true;
             }
         });
         
