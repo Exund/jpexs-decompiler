@@ -212,7 +212,7 @@ public class PlaceObject3Tag extends PlaceObjectTypeTag implements ASMSourceCont
     @EnumValue(value = BlendMode.ALPHA, text = "alpha")
     @EnumValue(value = BlendMode.ERASE, text = "erase")
     @EnumValue(value = BlendMode.OVERLAY, text = "overlay")
-    @EnumValue(value = BlendMode.HARDLIGHT, text = "hardlight")    
+    @EnumValue(value = BlendMode.HARDLIGHT, text = "hardlight")
     public int blendMode;
 
     /**
@@ -248,17 +248,25 @@ public class PlaceObject3Tag extends PlaceObjectTypeTag implements ASMSourceCont
     @Reserved
     public boolean reserved;
 
+    protected PlaceObject3Tag(SWF swf, int id, String name, ByteArrayRange data) {
+        super(swf, id, name, data);
+    }
+
     /**
      * Constructor
      *
      * @param swf
      */
     public PlaceObject3Tag(SWF swf) {
-        super(swf, ID, NAME, null);
+        this(swf, ID, NAME, null);
     }
 
     public PlaceObject3Tag(SWF swf, boolean placeFlagMove, int depth, String className, int characterId, MATRIX matrix, CXFORMWITHALPHA colorTransform, int ratio, String name, int clipDepth, List<FILTER> surfaceFilterList, int blendMode, Integer bitmapCache, int visible, RGBA backgroundColor, CLIPACTIONS clipActions, boolean placeFlagHasImage) {
-        super(swf, ID, NAME, null);
+        this(swf);
+        init(swf, placeFlagMove, depth, className, characterId, matrix, colorTransform, ratio, name, clipDepth, surfaceFilterList, blendMode, bitmapCache, visible, backgroundColor, clipActions, placeFlagHasImage);
+    }
+
+    protected final void init(SWF swf, boolean placeFlagMove, int depth, String className, int characterId, MATRIX matrix, CXFORMWITHALPHA colorTransform, int ratio, String name, int clipDepth, List<FILTER> surfaceFilterList, int blendMode, Integer bitmapCache, int visible, RGBA backgroundColor, CLIPACTIONS clipActions, boolean placeFlagHasImage) {
         this.placeFlagHasClassName = className != null;
         this.placeFlagHasFilterList = surfaceFilterList != null;
         this.placeFlagHasBlendMode = blendMode >= 0;
@@ -303,7 +311,7 @@ public class PlaceObject3Tag extends PlaceObjectTypeTag implements ASMSourceCont
     }
 
     @Override
-    public final void readData(SWFInputStream sis, ByteArrayRange data, int level, boolean parallel, boolean skipUnusualTags, boolean lazy) throws IOException {
+    public void readData(SWFInputStream sis, ByteArrayRange data, int level, boolean parallel, boolean skipUnusualTags, boolean lazy) throws IOException {
         placeFlagHasClipActions = sis.readUB(1, "placeFlagHasClipActions") == 1;
         placeFlagHasClipDepth = sis.readUB(1, "placeFlagHasClipDepth") == 1;
         placeFlagHasName = sis.readUB(1, "placeFlagHasName") == 1;
@@ -685,5 +693,4 @@ public class PlaceObject3Tag extends PlaceObjectTypeTag implements ASMSourceCont
     public boolean hasImage() {
         return placeFlagHasImage;
     }
-
 }
