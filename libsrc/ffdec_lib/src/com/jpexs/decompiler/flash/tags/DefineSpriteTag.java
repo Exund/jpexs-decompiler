@@ -528,14 +528,26 @@ public class DefineSpriteTag extends DrawableTag implements Timelined {
         Map<Integer, Integer> depthMap = new HashMap<>();
         int j = 0;
         for(int d : depths) {
-            depthMap.put(d, j);
-            j++;
+            depthMap.put(d, ++j);
         }
 
         for(Tag t : subTags) {
             if(t instanceof DepthTag) {
                 DepthTag dt = (DepthTag)t;
                 dt.setDepth(depthMap.get(dt.getDepth()));
+            }
+            
+            if(t instanceof PlaceObjectTypeTag) {
+                PlaceObjectTypeTag pt = (PlaceObjectTypeTag)t;
+                if(pt.getPlaceFlagHasClipDepth()) {
+                    int clipDepth = pt.getClipDepth();
+                    
+                    while(!(depthMap.containsKey(clipDepth) || clipDepth == 1)) {
+                        clipDepth--;
+                    }
+                    
+                    pt.setClipDepth(depthMap.getOrDefault(clipDepth, pt.getDepth()));
+                }
             }
         }
     }
