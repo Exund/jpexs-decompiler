@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.Vector;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
@@ -47,6 +46,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.TransferHandler;
+import javax.swing.SwingConstants;
 
 /**
  *
@@ -79,7 +79,7 @@ public class MergeSpritesDialog extends AppDialog {
         Container cnt = getContentPane();
         cnt.setLayout(new BoxLayout(cnt, BoxLayout.Y_AXIS));
         
-        cnt.add(new JLabel(translate("merge.resolutionMethod")));
+        cnt.add(new JLabel(translate("merge.resolutionMethod"));
         resolutionMethodComboBox = new JComboBox<>();
         for(ResolutionMethod rm : ResolutionMethod.values()) {
             resolutionMethodComboBox.addItem(new ComboBoxItem<>(translate("resolution." +  rm.toString()), rm));
@@ -177,6 +177,27 @@ public class MergeSpritesDialog extends AppDialog {
         listScroller.setPreferredSize(new Dimension(400, 200));
         cnt.add(listScroller);
         
+        JButton toTopButton = new JButton("︽");
+        toTopButton.addActionListener(evt -> {
+            int i = priorityList.getSelectedIndex();
+            DefineSpriteTag t = priorityList.getSelectedValue();
+            sprites.remove(i);
+            sprites.add(0, t);
+        });
+        
+        JButton toBottomButton = new JButton("︾");
+        toBottomButton.addActionListener(evt -> {
+            int i = priorityList.getSelectedIndex();
+            DefineSpriteTag t = priorityList.getSelectedValue();
+            sprites.remove(i);
+            sprites.add(sprites.size(), t);
+        });
+        
+        JPanel positionButtons = new JPanel(new FlowLayout());
+        positionButtons.add(toTopButton);
+        positionButtons.add(toBottomButton);
+        cnt.add(positionButtons);
+        
         JPanel panButtons = new JPanel(new FlowLayout());
         okButton.addActionListener(this::okButtonActionPerformed);
         cancelButton.addActionListener(this::cancelButtonActionPerformed);
@@ -237,7 +258,7 @@ public class MergeSpritesDialog extends AppDialog {
 
     public int showDialog(Collection<DefineSpriteTag> sprites) {
         this.sprites.clear();
-        this.sprites.addAll(sprites);
+        this.sprites.addAll(sprites.stream().sorted((a, b) -> a.getCharacterId() - b.getCharacterId()).toList());
         priorityList.setVisibleRowCount(7);
         setVisible(true);
         return result;
@@ -245,7 +266,7 @@ public class MergeSpritesDialog extends AppDialog {
     
     public enum ResolutionMethod {
         Override,
-        //InterleaveDepths,
+        //Interleave,
         Stack,
         None
     }
