@@ -454,6 +454,16 @@ public class PlaceObject3Tag extends PlaceObjectTypeTag implements ASMSourceCont
     }
 
     @Override
+    public void setClipDepth(int clipDepth) {
+        this.clipDepth = clipDepth;
+    }
+
+    @Override
+    public boolean getPlaceFlagHasClipDepth() {
+        return placeFlagHasClipDepth;
+    }
+
+    @Override
     public List<FILTER> getFilters() {
         if (placeFlagHasFilterList) {
             return surfaceFilterList;

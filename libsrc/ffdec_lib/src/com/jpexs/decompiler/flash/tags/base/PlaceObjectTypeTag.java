@@ -60,6 +60,10 @@ public abstract class PlaceObjectTypeTag extends Tag implements CharacterIdTag, 
 
     public abstract int getClipDepth();
 
+    public abstract void setClipDepth(int clipDepth);
+    
+    public abstract boolean getPlaceFlagHasClipDepth();
+
     public abstract String getClassName();
 
     public abstract boolean cacheAsBitmap();

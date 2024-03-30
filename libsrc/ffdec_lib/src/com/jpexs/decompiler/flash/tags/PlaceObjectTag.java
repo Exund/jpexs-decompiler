@@ -138,6 +138,16 @@ public class PlaceObjectTag extends PlaceObjectTypeTag {
     }
 
     @Override
+    public void setClipDepth(int clipDepth) {
+
+    }
+    
+    @Override
+    public boolean getPlaceFlagHasClipDepth() {
+        return false;
+    }
+    
+    @Override
     public List<FILTER> getFilters() {
         return null;
     }
@@ -294,9 +304,9 @@ public class PlaceObjectTag extends PlaceObjectTypeTag {
 
     @Override
     public void setPlaceFlagMove(boolean placeFlagMove) {
-        
+
     }
-    
+
     @Override
     public boolean hasImage() {
         return false;
