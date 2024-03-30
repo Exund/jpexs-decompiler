@@ -4438,8 +4438,8 @@ public class TagTreeContextMenu extends JPopupMenu {
                 mergeSpritesOverride(frameCount, sprites, merged, swf);
             }
 
-            if (method == MergeSpritesDialog.ResolutionMethod.OffsetDepths) {
-                mergeSpritesOffsetDepths(frameCount, sprites, merged, swf, compact);
+            if (method == MergeSpritesDialog.ResolutionMethod.Stack) {
+                mergeSpritesStack(frameCount, sprites, merged, swf, compact);
             }
 
             /*if(method == MergeSpritesDialog.ResolutionMethod.InterleaveDepths) {
@@ -4452,7 +4452,7 @@ public class TagTreeContextMenu extends JPopupMenu {
                 t.setTimelined(merged);
             }
 
-            if (compact && method != MergeSpritesDialog.ResolutionMethod.OffsetDepths) {
+            if (compact) {
                 merged.compactDepths();
             }
             
@@ -4547,13 +4547,12 @@ public class TagTreeContextMenu extends JPopupMenu {
         }
     }
     
-    private void mergeSpritesOffsetDepths(int frameCount, List<DefineSpriteTag> _sprites, DefineSpriteTag merged, SWF swf, boolean compact) throws IOException, InterruptedException {
+    private void mergeSpritesStack(int frameCount, List<DefineSpriteTag> _sprites, DefineSpriteTag merged, SWF swf, boolean compact) throws IOException, InterruptedException {
         List<DefineSpriteTag> sprites = new ArrayList<>();
         
         try {
             for (int i = 0; i < _sprites.size(); i++) {
                 DefineSpriteTag sprite = (DefineSpriteTag) _sprites.get(i).cloneTag();
-                //if (compact) sprite.compactDepths();
                 sprite.resetTimeline();
                 sprites.add(sprite);
             }

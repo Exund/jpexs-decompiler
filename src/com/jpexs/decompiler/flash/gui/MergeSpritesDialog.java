@@ -86,6 +86,26 @@ public class MergeSpritesDialog extends AppDialog {
         }
         cnt.add(resolutionMethodComboBox);
         
+        compactCheckBox = new JCheckBox(translate("merge.compact"));
+        cnt.add(compactCheckBox);
+        
+        replaceCheckBox = new JCheckBox(translate("merge.replace"));
+        replaceCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteCheckBox.setEnabled(replaceCheckBox.isSelected());
+                if(!deleteCheckBox.isEnabled()) {
+                    deleteCheckBox.setSelected(false);
+                }
+            }
+            
+        });
+        cnt.add(replaceCheckBox);
+        
+        deleteCheckBox = new JCheckBox(translate("merge.delete"));
+        deleteCheckBox.setEnabled(false);
+        cnt.add(deleteCheckBox);
+        
         cnt.add(new JLabel(translate("merge.priority")));      
         sprites = new DefaultListModel<>();
         
@@ -152,26 +172,6 @@ public class MergeSpritesDialog extends AppDialog {
                 return true;
             }
         });
-        
-        compactCheckBox = new JCheckBox(translate("merge.compact"));
-        cnt.add(compactCheckBox);
-        
-        replaceCheckBox = new JCheckBox(translate("merge.replace"));
-        replaceCheckBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                deleteCheckBox.setEnabled(replaceCheckBox.isSelected());
-                if(!deleteCheckBox.isEnabled()) {
-                    deleteCheckBox.setSelected(false);
-                }
-            }
-            
-        });
-        cnt.add(replaceCheckBox);
-        
-        deleteCheckBox = new JCheckBox(translate("merge.delete"));
-        deleteCheckBox.setEnabled(false);
-        cnt.add(deleteCheckBox);
           
         JScrollPane listScroller = new FasterScrollPane(priorityList);
         listScroller.setPreferredSize(new Dimension(400, 200));
@@ -246,7 +246,7 @@ public class MergeSpritesDialog extends AppDialog {
     public enum ResolutionMethod {
         Override,
         //InterleaveDepths,
-        OffsetDepths,
+        Stack,
         None
     }
 }
