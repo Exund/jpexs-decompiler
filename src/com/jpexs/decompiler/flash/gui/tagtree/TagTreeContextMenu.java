@@ -139,7 +139,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -4413,20 +4413,6 @@ public class TagTreeContextMenu extends JPopupMenu {
         boolean delete = dialog.getDelete();
         boolean compact = dialog.getCompactDepths();
 
-        if (compact && method == MergeSpritesDialog.ResolutionMethod.OffsetDepths) {
-            try {
-                for (int i = 0; i < sprites.size(); i++) {
-                    DefineSpriteTag sprite = (DefineSpriteTag) sprites.get(i).cloneTag();
-                    sprite.compactDepths();
-                    sprite.resetTimeline();
-                    sprites.set(i, sprite);
-                }
-            } catch (InterruptedException | IOException ex) {
-                Logger.getLogger(TagTreeContextMenu.class.getName()).log(Level.SEVERE, null, ex);
-                return;
-            }
-        }
-
         SWF swf = sprites.get(0).getSwf();
         DefineSpriteTag merged = new DefineSpriteTag(swf);
 
@@ -4445,134 +4431,15 @@ public class TagTreeContextMenu extends JPopupMenu {
 
         try {
             if (method == MergeSpritesDialog.ResolutionMethod.None) {
-                for (int i = 0; i < frameCount; i++) {
-                    for (int j = sprites.size() - 1; j > -1; j--) {
-                        DefineSpriteTag sprite = sprites.get(j);
-                        Timeline stimeline = sprite.getTimeline();
-                        Frame sf = stimeline.getFrame(i);
-                        if (sf != null) {
-                            for (Tag t : sf.innerTags) {
-                                Tag clone = t.cloneTag();
-                                merged.addTag(clone);
-                            }
-                        }
-                    }
-                    Tag showFrame = new ShowFrameTag(swf);
-                    showFrame.setTimelined(merged);
-                    merged.addTag(showFrame);
-                }
+                mergeSpritesNone(frameCount, sprites, merged, swf);
             }
 
             if (method == MergeSpritesDialog.ResolutionMethod.Override) {
-                for (int i = 0; i < frameCount; i++) {
-                    //boolean hasSoundStreamBlock = false;
-                    Set<Integer> placeAtDepth = new HashSet<>();
-                    Set<Integer> removeAtDepth = new HashSet<>();
-
-                    for (DefineSpriteTag sprite : sprites) {
-                        Timeline stimeline = sprite.getTimeline();
-                        Frame sf = stimeline.getFrame(i);
-                        if (sf != null) {
-                            for (Tag t : sf.innerTags) {
-                                /*if (t instanceof SoundStreamBlockTag) {
-                                    if (hasSoundStreamBlock) {
-                                        continue;
-                                    }
-                                    hasSoundStreamBlock = true;
-                                }*/
-
-                                if (t instanceof PlaceObjectTypeTag) {
-                                    int depth = ((PlaceObjectTypeTag) t).getDepth();
-                                    if (placeAtDepth.contains(depth)) {
-                                        continue;
-                                    }
-                                    placeAtDepth.add(depth);
-                                }
-
-                                if (t instanceof RemoveTag) {
-                                    int depth = ((RemoveTag) t).getDepth();
-                                    if (removeAtDepth.contains(depth)) {
-                                        continue;
-                                    }
-                                    removeAtDepth.add(depth);
-                                }
-
-                                Tag clone = t.cloneTag();
-                                merged.addTag(clone);
-                            }
-                        }
-                    }
-
-                    Tag showFrame = new ShowFrameTag(swf);
-                    showFrame.setTimelined(merged);
-                    merged.addTag(showFrame);
-                }
+                mergeSpritesOverride(frameCount, sprites, merged, swf);
             }
 
             if (method == MergeSpritesDialog.ResolutionMethod.OffsetDepths) {
-                int prevSpriteMaxDepth = 0;
-                int maxDepth = 0;
-
-                Map<Integer, Integer> minDepthPerSprite = new HashMap<>();
-
-                for (DefineSpriteTag sprite : sprites) {
-                    int minDepth = Integer.MAX_VALUE;
-                    for (Tag t : sprite.getTags()) {
-                        if (t instanceof DepthTag) {
-                            DepthTag dt = (DepthTag) t;
-                            int depth = dt.getDepth();
-                            if (depth < minDepth) {
-                                minDepth = depth;
-                            }
-                        }
-                    }
-                    minDepthPerSprite.put(sprite.getCharacterId(), minDepth);
-                }
-                
-                for (DefineSpriteTag sprite : sprites) {
-                    int minDepth = minDepthPerSprite.getOrDefault(sprite.getCharacterId(), 0);
-                    for (Tag t : sprite.getTags()) {
-                        if (t instanceof DepthTag) {
-                            DepthTag dt = (DepthTag) t;
-                            int depth = dt.getDepth();
-                            dt.setDepth(depth - minDepth);
-                        }
-                    }
-                }
-
-                for (int i = 0; i < frameCount; i++) {
-                    for (DefineSpriteTag sprite : sprites) {
-                        Timeline stimeline = sprite.getTimeline();
-                        Frame sf = stimeline.getFrame(i);
-                        if (sf != null) {
-                            //int minDepth = minDepthPerSprite.getOrDefault(sprite.getCharacterId(), 0);
-
-                            for (Tag t : sf.innerTags) {
-                                Tag clone = t.cloneTag();
-
-                                if (clone instanceof DepthTag) {
-                                    DepthTag dt = (DepthTag) clone;
-                                    int depth = dt.getDepth();
-
-                                    depth += prevSpriteMaxDepth;// - minDepth;
-
-                                    if (depth > maxDepth) {
-                                        maxDepth = depth;
-                                    }
-
-                                    dt.setDepth(depth);
-                                }
-
-                                merged.addTag(clone);
-                            }
-                        }
-
-                        prevSpriteMaxDepth = maxDepth + 1;
-                    }
-                    Tag showFrame = new ShowFrameTag(swf);
-                    showFrame.setTimelined(merged);
-                    merged.addTag(showFrame);
-                }
+                mergeSpritesOffsetDepths(frameCount, sprites, merged, swf, compact);
             }
 
             /*if(method == MergeSpritesDialog.ResolutionMethod.InterleaveDepths) {
@@ -4610,6 +4477,167 @@ public class TagTreeContextMenu extends JPopupMenu {
             mainPanel.refreshTree(swf);
         } catch (InterruptedException | IOException ex) {
             Logger.getLogger(TagTreeContextMenu.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    private void mergeSpritesNone(int frameCount, List<DefineSpriteTag> sprites, DefineSpriteTag merged, SWF swf) throws IOException, InterruptedException {
+        for (int i = 0; i < frameCount; i++) {
+            for (int j = sprites.size() - 1; j > -1; j--) {
+                DefineSpriteTag sprite = sprites.get(j);
+                Timeline stimeline = sprite.getTimeline();
+                Frame sf = stimeline.getFrame(i);
+                if (sf != null) {
+                    for (Tag t : sf.innerTags) {
+                        Tag clone = t.cloneTag();
+                        merged.addTag(clone);
+                    }
+                }
+            }
+            Tag showFrame = new ShowFrameTag(swf);
+            showFrame.setTimelined(merged);
+            merged.addTag(showFrame);
+        }
+    }
+    
+    private void mergeSpritesOverride(int frameCount, List<DefineSpriteTag> sprites, DefineSpriteTag merged, SWF swf) throws IOException, InterruptedException {
+        for (int i = 0; i < frameCount; i++) {
+            //boolean hasSoundStreamBlock = false;
+            Set<Integer> placeAtDepth = new HashSet<>();
+            Set<Integer> removeAtDepth = new HashSet<>();
+
+            for (DefineSpriteTag sprite : sprites) {
+                Timeline stimeline = sprite.getTimeline();
+                Frame sf = stimeline.getFrame(i);
+                if (sf == null) {
+                    continue;
+                }
+
+                for (Tag t : sf.innerTags) {
+                    /*if (t instanceof SoundStreamBlockTag) {
+                        if (hasSoundStreamBlock) {
+                            continue;
+                        }
+                        hasSoundStreamBlock = true;
+                    }*/
+
+                    if (t instanceof PlaceObjectTypeTag) {
+                        int depth = ((PlaceObjectTypeTag) t).getDepth();
+                        if (placeAtDepth.contains(depth)) {
+                            continue;
+                        }
+                        placeAtDepth.add(depth);
+                    }
+
+                    if (t instanceof RemoveTag) {
+                        int depth = ((RemoveTag) t).getDepth();
+                        if (removeAtDepth.contains(depth)) {
+                            continue;
+                        }
+                        removeAtDepth.add(depth);
+                    }
+
+                    Tag clone = t.cloneTag();
+                    merged.addTag(clone);
+                }
+            }
+
+            Tag showFrame = new ShowFrameTag(swf);
+            showFrame.setTimelined(merged);
+            merged.addTag(showFrame);
+        }
+    }
+    
+    private void mergeSpritesOffsetDepths(int frameCount, List<DefineSpriteTag> _sprites, DefineSpriteTag merged, SWF swf, boolean compact) throws IOException, InterruptedException {
+        List<DefineSpriteTag> sprites = new ArrayList<>();
+        
+        try {
+            for (int i = 0; i < _sprites.size(); i++) {
+                DefineSpriteTag sprite = (DefineSpriteTag) _sprites.get(i).cloneTag();
+                //if (compact) sprite.compactDepths();
+                sprite.resetTimeline();
+                sprites.add(sprite);
+            }
+        } catch (InterruptedException | IOException ex) {
+            Logger.getLogger(TagTreeContextMenu.class.getName()).log(Level.SEVERE, null, ex);
+            return;
+        }
+
+        Map<Integer, Integer> minDepthPerSprite = new HashMap<>();
+        Map<Integer, Integer> maxDepthPerSprite = new HashMap<>();
+
+        for (DefineSpriteTag sprite : sprites) {
+            int minDepth = Integer.MAX_VALUE;
+            for (Tag t : sprite.getTags()) {
+                if (t instanceof DepthTag) {
+                    DepthTag dt = (DepthTag) t;
+                    int depth = dt.getDepth();
+                    if (depth < minDepth) {
+                        minDepth = depth;
+                    }
+                }
+            }
+            minDepthPerSprite.put(sprite.getCharacterId(), minDepth);
+        }
+
+        for (DefineSpriteTag sprite : sprites) {
+            int id = sprite.getCharacterId();
+            int minDepth = minDepthPerSprite.getOrDefault(id, 0);
+            int maxDepth = 1;
+            for (Tag t : sprite.getTags()) {
+                if (t instanceof DepthTag) {
+                    DepthTag dt = (DepthTag) t;
+                    int depth = dt.getDepth() - minDepth + 1;
+                    dt.setDepth(depth);
+                    
+                    if(depth > maxDepth) {
+                        maxDepth = depth;
+                    }
+                }
+
+                if (t instanceof PlaceObjectTypeTag) {
+                    PlaceObjectTypeTag pt = (PlaceObjectTypeTag) t;
+                    int clipDepth = pt.getClipDepth();
+                    pt.setClipDepth(clipDepth - minDepth + 1);
+                }
+            }
+            
+            maxDepthPerSprite.put(id, maxDepth);
+        }
+
+        for (int i = 0; i < frameCount; i++) {
+            int prevSpriteDepth = 0;
+            
+            for (DefineSpriteTag sprite : sprites) {
+                Timeline stimeline = sprite.getTimeline();
+                Frame sf = stimeline.getFrame(i);
+                if (sf != null) {
+                    //int minDepth = minDepthPerSprite.getOrDefault(sprite.getCharacterId(), 0);
+
+                    for (Tag t : sf.innerTags) {
+                        Tag clone = t.cloneTag();
+
+                        if (clone instanceof DepthTag) {
+                            DepthTag dt = (DepthTag) clone;
+                            int depth = dt.getDepth() + prevSpriteDepth;
+
+                            dt.setDepth(depth);
+                        }
+
+                        if (clone instanceof PlaceObjectTypeTag) {
+                            PlaceObjectTypeTag pt = (PlaceObjectTypeTag) clone;
+                            pt.setClipDepth(pt.getClipDepth() + prevSpriteDepth);
+                        }
+
+                        merged.addTag(clone);
+                    }
+                }
+                
+                prevSpriteDepth += maxDepthPerSprite.get(sprite.getCharacterId());
+            }            
+            
+            Tag showFrame = new ShowFrameTag(swf);
+            showFrame.setTimelined(merged);
+            merged.addTag(showFrame);
         }
     }
 
