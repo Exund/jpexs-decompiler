@@ -537,6 +537,7 @@ public class DefineSpriteTag extends DrawableTag implements Timelined {
                 dt.setDepth(depthMap.get(dt.getDepth()));
             }
             
+            // Adjust clip depth
             if(t instanceof PlaceObjectTypeTag) {
                 PlaceObjectTypeTag pt = (PlaceObjectTypeTag)t;
                 if(pt.getPlaceFlagHasClipDepth()) {

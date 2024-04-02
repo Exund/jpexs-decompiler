@@ -4436,38 +4436,39 @@ public class TagTreeContextMenu extends JPopupMenu {
                 default:
                     break;
             }
-
-            for (Tag t : merged.getTags()) {
-                t.setModified(true);
-                t.setTimelined(merged);
-            }
-
-            if (compact) {
-                merged.compactDepths();
-            }
-
-            merged.resetTimeline();
-            swf.addTag(merged);
-
-            if (replace) {
-                for (DefineSpriteTag sprite : sprites) {
-                    //swf.getDependentFrames(sprite.ch)
-
-                    if (delete) {
-                        swf.removeTag(sprite);
-                    }
-                }
-            }
-
-            swf.updateCharacters();
-            swf.computeDependentCharacters();
-            swf.computeDependentFrames();
-            swf.resetTimelines(swf);
-
-            mainPanel.refreshTree(swf);
         } catch (InterruptedException | IOException ex) {
             Logger.getLogger(TagTreeContextMenu.class.getName()).log(Level.SEVERE, null, ex);
+            return;
         }
+
+        for (Tag t : merged.getTags()) {
+            t.setModified(true);
+            t.setTimelined(merged);
+        }
+
+        if (compact) {
+            merged.compactDepths();
+        }
+
+        merged.resetTimeline();
+        swf.addTag(merged);
+
+        if (replace) {
+            for (DefineSpriteTag sprite : sprites) {
+                //swf.getDependentFrames(sprite.ch)
+
+                if (delete) {
+                    swf.removeTag(sprite);
+                }
+            }
+        }
+
+        swf.updateCharacters();
+        swf.computeDependentCharacters();
+        swf.computeDependentFrames();
+        swf.resetTimelines(swf);
+
+        mainPanel.refreshTree(swf);
     }
 
     private void mergeSpritesNone(int frameCount, List<DefineSpriteTag> sprites, DefineSpriteTag merged, SWF swf) throws IOException, InterruptedException {
@@ -4551,7 +4552,6 @@ public class TagTreeContextMenu extends JPopupMenu {
             return;
         }
 
-        Map<Integer, Integer> minDepthPerSprite = new HashMap<>();
         Map<Integer, Integer> maxDepthPerSprite = new HashMap<>();
 
         for (DefineSpriteTag sprite : clones) {
@@ -4565,12 +4565,7 @@ public class TagTreeContextMenu extends JPopupMenu {
                     }
                 }
             }
-            minDepthPerSprite.put(sprite.getCharacterId(), minDepth);
-        }
-
-        for (DefineSpriteTag sprite : clones) {
-            int id = sprite.getCharacterId();
-            int minDepth = minDepthPerSprite.getOrDefault(id, 0);
+            
             int maxDepth = 1;
             for (Tag t : sprite.getTags()) {
                 if (t instanceof DepthTag) {
@@ -4590,7 +4585,7 @@ public class TagTreeContextMenu extends JPopupMenu {
                 }
             }
 
-            maxDepthPerSprite.put(id, maxDepth);
+            maxDepthPerSprite.put(sprite.getCharacterId(), maxDepth);
         }
 
         for (int i = 0; i < frameCount; i++) {
@@ -4600,8 +4595,6 @@ public class TagTreeContextMenu extends JPopupMenu {
                 Timeline stimeline = sprite.getTimeline();
                 Frame sf = stimeline.getFrame(i);
                 if (sf != null) {
-                    //int minDepth = minDepthPerSprite.getOrDefault(sprite.getCharacterId(), 0);
-
                     for (Tag t : sf.innerTags) {
                         Tag clone = t.cloneTag();
 
